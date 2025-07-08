@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAMERINO18 ✧ AR Experience</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000 0%, #111 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(45deg, #fff, #ccc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            font-weight: 300;
+            margin-bottom: 3rem;
+            text-align: center;
+            color: #888;
+        }
+        
+        .upload-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .upload-section:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .upload-section input[type="file"] {
+            display: none;
+        }
+        
+        .upload-button {
+            background: linear-gradient(45deg, #fff, #ddd);
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 1rem;
+        }
+        
+        .upload-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.2);
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .control-label {
+            font-size: 0.8rem;
+            color: #ccc;
+            font-weight: 500;
+        }
+        
+        .slider {
+            width: 100px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .price-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 1rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+        
+        .price-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+        
+        .price-details {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        .budget-mode {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 1rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+        
+        .budget-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 120px;
+        }
+        
+        .whatsapp-btn {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .whatsapp-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+        }
+        
+        .ar-scene {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .watermark {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            z-index: 100;
+            font-weight: 500;
+        }
+        
+        .instructions {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 90%;
+        }
+        
+        .instructions h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        
+        .instructions p {
+            color: #ccc;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .start-ar-btn {
+            background: linear-gradient(45deg, #fff, #ddd);
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .start-ar-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 1rem;
+            }
+            
+            .control-group {
+                flex-direction: row;
+                gap: 1rem;
+            }
+            
+            .slider {
+                width: 80px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .upload-section {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de carga -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="logo">CAMERINO18</div>
+        <div class="subtitle">✧ [ AR EXPERIENCE ] ✧</div>
+        <div class="upload-section">
+            <h3>Sube tu imagen para ver en AR</h3>
+            <p>Selecciona la imagen que quieres convertir en cuadro</p>
+            <input type="file" id="imageUpload" accept="image/*">
+            <button class="upload-button" onclick="document.getElementById('imageUpload').click()">
+                ✧ Seleccionar Imagen ✧
+            </button>
+        </div>
+        <div class="instructions" id="instructions" style="display: none;">
+            <h3>✧ [ INSTRUCCIONES ] ✧</h3>
+            <p>• Apunta tu cámara hacia una superficie plana</p>
+            <p>• Toca la pantalla para colocar tu cuadro</p>
+            <p>• Usa los controles para ajustar el tamaño</p>
+            <p>• El precio se calculará automáticamente</p>
+            <button class="start-ar-btn" onclick="startAR()">Comenzar AR</button>
+        </div>
+    </div>
+
+    <!-- Escena AR -->
+    <a-scene 
+        id="arScene"
+        class="ar-scene"
+        renderer="logarithmicDepthBuffer: true; antialias: true;"
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        style="display: none;">
+        
+        <!-- Luz ambiente -->
+        <a-light type="ambient" color="#404040" intensity="0.5"></a-light>
+        <a-light type="directional" position="0 1 0" color="#ffffff" intensity="0.8"></a-light>
+        
+        <!-- Marcador AR -->
+        <a-marker preset="hiro" id="markerHiro">
+            <a-plane 
+                id="artFrame"
+                position="0 0 0"
+                rotation="-90 0 0"
+                width="1"
+                height="0.7"
+                color="#ffffff"
+                src=""
+                visible="false">
+                
+                <!-- Marco del cuadro -->
+                <a-box 
+                    position="0 0 -0.02"
+                    width="1.05"
+                    height="0.75"
+                    depth="0.04"
+                    color="#8B4513"
+                    material="roughness: 0.8; metalness: 0.2">
+                </a-box>
+                
+                <!-- Vidrio del cuadro -->
+                <a-plane 
+                    position="0 0 0.01"
+                    width="1"
+                    height="0.7"
+                    color="#ffffff"
+                    material="transparent: true; opacity: 0.1; roughness: 0.1; metalness: 0.9">
+                </a-plane>
+            </a-plane>
+        </a-marker>
+        
+        <!-- Marcador genérico para superficie -->
+        <a-marker type="pattern" url="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/data/hiro.patt">
+            <a-plane 
+                id="artFramePattern"
+                position="0 0 0"
+                rotation="-90 0 0"
+                width="1"
+                height="0.7"
+                color="#ffffff"
+                src=""
+                visible="false">
+                
+                <a-box 
+                    position="0 0 -0.02"
+                    width="1.05"
+                    height="0.75"
+                    depth="0.04"
+                    color="#8B4513"
+                    material="roughness: 0.8; metalness: 0.2">
+                </a-box>
+                
+                <a-plane 
+                    position="0 0 0.01"
+                    width="1"
+                    height="0.7"
+                    color="#ffffff"
+                    material="transparent: true; opacity: 0.1; roughness: 0.1; metalness: 0.9">
+                </a-plane>
+            </a-plane>
+        </a-marker>
+        
+        <!-- Cámara -->
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <!-- Controles -->
+    <div class="controls" id="controls" style="display: none;">
+        <div class="control-group">
+            <label class="control-label">Ancho</label>
+            <input type="range" class="slider" id="widthSlider" min="0.3" max="2" step="0.1" value="1">
+            <span id="widthValue">1.0m</span>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Alto</label>
+            <input type="range" class="slider" id="heightSlider" min="0.3" max="2" step="0.1" value="0.7">
+            <span id="heightValue">0.7m</span>
+        </div>
+    </div>
+
+    <!-- Modo presupuesto -->
+    <div class="budget-mode" id="budgetMode" style="display: none;">
+        <label class="control-label">Presupuesto</label>
+        <input type="number" class="budget-input" id="budgetInput" placeholder="$0" min="0">
+        <button class="upload-button" onclick="calculateByBudget()" style="margin: 0.5rem 0 0 0; padding: 0.5rem 1rem; font-size: 0.9rem;">
+            Calcular
+        </button>
+    </div>
+
+    <!-- Precio -->
+    <div class="price-display" id="priceDisplay" style="display: none;">
+        <div class="price-value" id="priceValue">$0</div>
+        <div class="price-details" id="priceDetails">0 m²</div>
+    </div>
+
+    <!-- Botón WhatsApp -->
+    <button class="whatsapp-btn" id="whatsappBtn" onclick="sendWhatsApp()" style="display: none;">
+        📱
+    </button>
+
+    <!-- Watermark -->
+    <div class="watermark">✧ CAMERINO18 ✧</div>
+
+    <script>
+        // Variables globales
+        let selectedImage = null;
+        let currentWidth = 1.0;
+        let currentHeight = 0.7;
+        let currentPrice = 0;
+        let basePrice = 629.17; // $504.17 + $125 adicionales por m²
+        
+        // Manejo de la carga de imagen
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImage = e.target.result;
+                    document.getElementById('instructions').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Iniciar AR
+        function startAR() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('arScene').style.display = 'block';
+            document.getElementById('controls').style.display = 'flex';
+            document.getElementById('budgetMode').style.display = 'block';
+            document.getElementById('priceDisplay').style.display = 'block';
+            document.getElementById('whatsappBtn').style.display = 'block';
+            
+            // Configurar imagen en AR
+            if (selectedImage) {
+                const artFrame = document.getElementById('artFrame');
+                const artFramePattern = document.getElementById('artFramePattern');
+                
+                artFrame.setAttribute('src', selectedImage);
+                artFrame.setAttribute('visible', 'true');
+                artFramePattern.setAttribute('src', selectedImage);
+                artFramePattern.setAttribute('visible', 'true');
+                
+                updatePrice();
+            }
+        }
+
+        // Controles de dimensiones
+        document.getElementById('widthSlider').addEventListener('input', function() {
+            currentWidth = parseFloat(this.value);
+            document.getElementById('widthValue').textContent = currentWidth.toFixed(1) + 'm';
+            updateFrameSize();
+            updatePrice();
+        });
+
+        document.getElementById('heightSlider').addEventListener('input', function() {
+            currentHeight = parseFloat(this.value);
+            document.getElementById('heightValue').textContent = currentHeight.toFixed(1) + 'm';
+            updateFrameSize();
+            updatePrice();
+        });
+
+        // Actualizar tamaño del marco en AR
+        function updateFrameSize() {
+            const artFrame = document.getElementById('artFrame');
+            const artFramePattern = document.getElementById('artFramePattern');
+            
+            if (artFrame && artFramePattern) {
+                artFrame.setAttribute('width', currentWidth);
+                artFrame.setAttribute('height', currentHeight);
+                artFramePattern.setAttribute('width', currentWidth);
+                artFramePattern.setAttribute('height', currentHeight);
+                
+                // Actualizar marco
+                const frameWidth = currentWidth * 1.05;
+                const frameHeight = currentHeight * 1.05;
+                
+                artFrame.querySelector('a-box').setAttribute('width', frameWidth);
+                artFrame.querySelector('a-box').setAttribute('height', frameHeight);
+                artFramePattern.querySelector('a-box').setAttribute('width', frameWidth);
+                artFramePattern.querySelector('a-box').setAttribute('height', frameHeight);
+            }
+        }
+
+        // Calcular precio
+        function updatePrice() {
+            const area = currentWidth * currentHeight;
+            currentPrice = Math.round(area * basePrice);
+            
+            document.getElementById('priceValue').textContent = '$' + currentPrice.toLocaleString();
+            document.getElementById('priceDetails').textContent = area.toFixed(2) + ' m² • ' + currentWidth.toFixed(1) + 'm × ' + currentHeight.toFixed(1) + 'm';
+        }
+
+        // Calcular por presupuesto
+        function calculateByBudget() {
+            const budget = parseFloat(document.getElementById('budgetInput').value);
+            if (budget && budget > 0) {
+                const maxArea = budget / basePrice;
+                const side = Math.sqrt(maxArea);
+                
+                currentWidth = Math.min(side, 2);
+                currentHeight = Math.min(side * 0.7, 2);
+                
+                document.getElementById('widthSlider').value = currentWidth;
+                document.getElementById('heightSlider').value = currentHeight;
+                document.getElementById('widthValue').textContent = currentWidth.toFixed(1) + 'm';
+                document.getElementById('heightValue').textContent = currentHeight.toFixed(1) + 'm';
+                
+                updateFrameSize();
+                updatePrice();
+            }
+        }
+
+        // Enviar a WhatsApp
+        function sendWhatsApp() {
+            const area = currentWidth * currentHeight;
+            const message = `✧ CAMERINO18 ✧\n\nHola! Me interesa un cuadro personalizado:\n\n📐 Dimensiones: ${currentWidth.toFixed(1)}m × ${currentHeight.toFixed(1)}m\n📏 Área: ${area.toFixed(2)} m²\n💰 Precio estimado: $${currentPrice.toLocaleString()}\n\n¿Podrías darme más información?`;
+            
+            const whatsappUrl = `https://wa.me/5215500000000?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // Inicializar
+        updatePrice();
+    </script>
+</body>
+</html>
